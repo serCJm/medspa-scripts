@@ -1,6 +1,7 @@
-import { Cell, Worksheet } from "exceljs";
+import { Worksheet } from "exceljs";
 
 const ExcelJS = require("exceljs");
+const settings = require("./settings.config.js");
 
 (async () => {
 	const fileName = process.argv[2];
@@ -10,6 +11,8 @@ const ExcelJS = require("exceljs");
 
 	deleteNoShows(worksheet);
 	removeUnusedCol(worksheet);
+	subTotal(worksheet);
+	calcTax(worksheet);
 
 	await workbook.xlsx.writeFile(fileName);
 })();
@@ -32,3 +35,32 @@ function removeUnusedCol(worksheet: Worksheet) {
 	const colToRemove: number[] = [1, 1, 2, 2, 3, 5, 5, 5, 8, 8];
 	colToRemove.forEach((col) => worksheet.spliceColumns(col, 1));
 }
+
+function subTotal(worksheet: Worksheet) {
+	const subTotalCol = worksheet.getColumn(5);
+	let subTotal = 0;
+	subTotalCol.eachCell(function (cell, rowNumber) {
+		if (rowNumber > 1 && cell.value) {
+			subTotal += +cell.value;
+		}
+	});
+	const comSubTotal = subTotal * settings[process.argv[3]].commission;
+	worksheet.addRow([]);
+	worksheet.addRow(["Commission:", null, null, null, comSubTotal]);
+}
+
+function calcTax(worksheet: Worksheet) {
+	const subTotalCol = worksheet.getColumn(6);
+	let tax = 0;
+	subTotalCol.eachCell(function (cell, rowNumber) {
+		if (rowNumber > 1 && cell.value) {
+			tax += +cell.value;
+		}
+	});
+	const comSubTotal = tax * settings[process.argv[3]].commission;
+	worksheet.addRow(["GST Remittance:", null, null, null, comSubTotal]);
+}
+
+function calcTotal() {}
+
+function addGSTNum() {}
