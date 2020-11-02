@@ -9,6 +9,7 @@ const ExcelJS = require("exceljs");
 	const worksheet = workbook.getWorksheet("Export");
 
 	deleteNoShows(worksheet);
+	removeUnusedCol(worksheet);
 
 	await workbook.xlsx.writeFile(fileName);
 })();
@@ -25,4 +26,9 @@ function deleteNoShows(worksheet: Worksheet) {
 		)
 			worksheet.spliceRows(rowNumber, 1);
 	});
+}
+
+function removeUnusedCol(worksheet: Worksheet) {
+	const colToRemove: number[] = [1, 1, 2, 2, 3, 5, 5, 5, 8, 8];
+	colToRemove.forEach((col) => worksheet.spliceColumns(col, 1));
 }
