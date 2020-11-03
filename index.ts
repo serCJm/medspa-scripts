@@ -80,6 +80,7 @@ function calcTotal() {}
 function addGSTNum(worksheet: Worksheet) {
 	const gstNumber = settings[PRACTITIONER].gst;
 	if (gstNumber) {
+		worksheet.addRow([]);
 		worksheet.addRow([gstNumber]);
 	}
 }
