@@ -1,12 +1,17 @@
+// a script to produce practitioner statement
+// usage: node index.js [filename] [practitioner] [--no-tax - OPTIONAL]
+
 import { Worksheet } from "exceljs";
 
 const ExcelJS = require("exceljs");
 const settings = require("./settings.config.js");
 
+const FILENAME = process.argv[2];
+const PRACTITIONER = process.argv[3];
+
 (async () => {
-	const fileName = process.argv[2];
 	const workbook = new ExcelJS.Workbook();
-	await workbook.xlsx.readFile(fileName);
+	await workbook.xlsx.readFile(FILENAME);
 	const worksheet = workbook.getWorksheet("Export");
 
 	deleteNoShows(worksheet);
@@ -15,7 +20,9 @@ const settings = require("./settings.config.js");
 	const tax: number = calcTax(worksheet);
 	insertComAndTax(worksheet, subTotal, tax);
 
-	await workbook.xlsx.writeFile(fileName);
+	addGSTNum(worksheet);
+
+	await workbook.xlsx.writeFile(FILENAME);
 })();
 
 function deleteNoShows(worksheet: Worksheet) {
@@ -45,7 +52,7 @@ function calcSubTotal(worksheet: Worksheet) {
 			subTotal += +cell.value;
 		}
 	});
-	const comSubTotal = subTotal * settings[process.argv[3]].commission;
+	const comSubTotal = subTotal * settings[PRACTITIONER].commission;
 
 	return comSubTotal;
 }
@@ -58,7 +65,7 @@ function calcTax(worksheet: Worksheet) {
 			tax += +cell.value;
 		}
 	});
-	const comTax = tax * settings[process.argv[3]].commission;
+	const comTax = tax * settings[PRACTITIONER].commission;
 	return comTax;
 }
 
@@ -70,4 +77,9 @@ function insertComAndTax(worksheet: Worksheet, subTotal: number, tax: number) {
 
 function calcTotal() {}
 
-function addGSTNum() {}
+function addGSTNum(worksheet: Worksheet) {
+	const gstNumber = settings[PRACTITIONER].gst;
+	if (gstNumber) {
+		worksheet.addRow([gstNumber]);
+	}
+}

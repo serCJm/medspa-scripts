@@ -2,17 +2,19 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ExcelJS = require("exceljs");
 const settings = require("./settings.config.js");
+const FILENAME = process.argv[2];
+const PRACTITIONER = process.argv[3];
 (async () => {
-    const fileName = process.argv[2];
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(fileName);
+    await workbook.xlsx.readFile(FILENAME);
     const worksheet = workbook.getWorksheet("Export");
     deleteNoShows(worksheet);
     removeUnusedCol(worksheet);
     const subTotal = calcSubTotal(worksheet);
     const tax = calcTax(worksheet);
     insertComAndTax(worksheet, subTotal, tax);
-    await workbook.xlsx.writeFile(fileName);
+    addGSTNum(worksheet);
+    await workbook.xlsx.writeFile(FILENAME);
 })();
 function deleteNoShows(worksheet) {
     worksheet.eachRow(function (row, rowNumber) {
@@ -36,7 +38,7 @@ function calcSubTotal(worksheet) {
             subTotal += +cell.value;
         }
     });
-    const comSubTotal = subTotal * settings[process.argv[3]].commission;
+    const comSubTotal = subTotal * settings[PRACTITIONER].commission;
     return comSubTotal;
 }
 function calcTax(worksheet) {
@@ -47,7 +49,7 @@ function calcTax(worksheet) {
             tax += +cell.value;
         }
     });
-    const comTax = tax * settings[process.argv[3]].commission;
+    const comTax = tax * settings[PRACTITIONER].commission;
     return comTax;
 }
 function insertComAndTax(worksheet, subTotal, tax) {
@@ -56,4 +58,9 @@ function insertComAndTax(worksheet, subTotal, tax) {
     worksheet.addRow(["GST Remittance:", null, null, null, tax]);
 }
 function calcTotal() { }
-function addGSTNum() { }
+function addGSTNum(worksheet) {
+    const gstNumber = settings[PRACTITIONER].gst;
+    if (gstNumber) {
+        worksheet.addRow([gstNumber]);
+    }
+}
