@@ -8,6 +8,7 @@ const settings = require("./settings.config.js");
 
 const FILENAME = process.argv[2];
 const PRACTITIONER = process.argv[3];
+const NOGST = process.argv[4];
 
 (async () => {
 	const workbook = new ExcelJS.Workbook();
@@ -17,7 +18,7 @@ const PRACTITIONER = process.argv[3];
 	deleteNoShows(worksheet);
 	removeUnusedCol(worksheet);
 	const subTotal: number = calcSubTotal(worksheet);
-	const tax: number = calcTax(worksheet);
+	const tax: number = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
 	insertComAndTax(worksheet, subTotal, tax);
 
 	addGSTNum(worksheet);

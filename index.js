@@ -4,6 +4,7 @@ const ExcelJS = require("exceljs");
 const settings = require("./settings.config.js");
 const FILENAME = process.argv[2];
 const PRACTITIONER = process.argv[3];
+const NOGST = process.argv[4];
 (async () => {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(FILENAME);
@@ -11,7 +12,7 @@ const PRACTITIONER = process.argv[3];
     deleteNoShows(worksheet);
     removeUnusedCol(worksheet);
     const subTotal = calcSubTotal(worksheet);
-    const tax = calcTax(worksheet);
+    const tax = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
     insertComAndTax(worksheet, subTotal, tax);
     addGSTNum(worksheet);
     await workbook.xlsx.writeFile(FILENAME);
