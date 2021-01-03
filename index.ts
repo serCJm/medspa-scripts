@@ -21,6 +21,8 @@ const NOGST = process.argv[4];
 	const tax: number = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
 	insertComAndTax(worksheet, subTotal, tax);
 
+	calcTotal(worksheet, subTotal, tax);
+
 	addGSTNum(worksheet);
 
 	await workbook.xlsx.writeFile(FILENAME);
@@ -76,7 +78,11 @@ function insertComAndTax(worksheet: Worksheet, subTotal: number, tax: number) {
 	worksheet.addRow(["GST Remittance:", null, null, null, tax]);
 }
 
-function calcTotal() {}
+function calcTotal(worksheet: Worksheet, subTotal: number, tax: number) {
+	const total = subTotal + tax;
+	worksheet.addRow([]);
+	worksheet.addRow(["Payment:", null, null, null, total]);
+}
 
 function addGSTNum(worksheet: Worksheet) {
 	const gstNumber = settings[PRACTITIONER].gst;
