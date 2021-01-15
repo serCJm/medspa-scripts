@@ -11,21 +11,25 @@ const PRACTITIONER = process.argv[3];
 const NOGST = process.argv[4];
 
 (async () => {
-	const workbook = new ExcelJS.Workbook();
-	await workbook.xlsx.readFile(FILENAME);
-	const worksheet = workbook.getWorksheet("Export");
+	try {
+		const workbook = new ExcelJS.Workbook();
+		await workbook.xlsx.readFile(FILENAME);
+		const worksheet = workbook.getWorksheet("Export");
 
-	deleteNoShows(worksheet);
-	removeUnusedCol(worksheet);
-	const subTotal: number = calcSubTotal(worksheet);
-	const tax: number = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
-	insertComAndTax(worksheet, subTotal, tax);
+		deleteNoShows(worksheet);
+		removeUnusedCol(worksheet);
+		const subTotal: number = calcSubTotal(worksheet);
+		const tax: number = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
+		insertComAndTax(worksheet, subTotal, tax);
 
-	calcTotal(worksheet, subTotal, tax);
+		calcTotal(worksheet, subTotal, tax);
 
-	addGSTNum(worksheet);
+		addGSTNum(worksheet);
 
-	await workbook.xlsx.writeFile(FILENAME);
+		await workbook.xlsx.writeFile(FILENAME);
+	} catch (e) {
+		console.log(e);
+	}
 })();
 
 function deleteNoShows(worksheet: Worksheet) {

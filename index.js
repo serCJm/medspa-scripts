@@ -6,17 +6,22 @@ const FILENAME = process.argv[2];
 const PRACTITIONER = process.argv[3];
 const NOGST = process.argv[4];
 (async () => {
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(FILENAME);
-    const worksheet = workbook.getWorksheet("Export");
-    deleteNoShows(worksheet);
-    removeUnusedCol(worksheet);
-    const subTotal = calcSubTotal(worksheet);
-    const tax = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
-    insertComAndTax(worksheet, subTotal, tax);
-    calcTotal(worksheet, subTotal, tax);
-    addGSTNum(worksheet);
-    await workbook.xlsx.writeFile(FILENAME);
+    try {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(FILENAME);
+        const worksheet = workbook.getWorksheet("Export");
+        deleteNoShows(worksheet);
+        removeUnusedCol(worksheet);
+        const subTotal = calcSubTotal(worksheet);
+        const tax = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
+        insertComAndTax(worksheet, subTotal, tax);
+        calcTotal(worksheet, subTotal, tax);
+        addGSTNum(worksheet);
+        await workbook.xlsx.writeFile(FILENAME);
+    }
+    catch (e) {
+        console.log(e);
+    }
 })();
 function deleteNoShows(worksheet) {
     worksheet.eachRow(function (row, rowNumber) {
