@@ -95,3 +95,26 @@ function addGSTNum(worksheet: Worksheet) {
 		worksheet.addRow([gstNumber]);
 	}
 }
+
+function separateICBC(worksheet: Worksheet) {
+	type rows = CellValue[] | { [key: string]: CellValue };
+	const icbcRows: rows[] = [];
+	const rowNumbers: number[] = [];
+
+	worksheet.eachRow(function (row, rowNumber) {
+		const description = row.getCell(2);
+
+		if (
+			typeof description.value === "string" &&
+			description.value.includes("ICBC")
+		) {
+			icbcRows.push(row.values);
+			rowNumbers.push(rowNumber);
+		}
+	});
+	rowNumbers.forEach((num, i) => worksheet.spliceRows(num - i, 1));
+	worksheet.addRow([]);
+	worksheet.addRow(["Commission:", null, null, null, null]);
+	worksheet.addRow([]);
+	worksheet.addRows(icbcRows);
+}
