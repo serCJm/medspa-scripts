@@ -1,7 +1,7 @@
 // a script to produce practitioner statement
-// usage: node index.js [filename] [practitioner] [--no-tax - OPTIONAL]
+// usage: node index.js [filename] [practitioner] [--no-tax - OPTIONAL] [--chiro - OPTIONAL]
 
-import { Worksheet } from "exceljs";
+import { CellValue, Worksheet } from "exceljs";
 
 const ExcelJS = require("exceljs");
 const settings = require("./settings.config.js");
@@ -9,6 +9,7 @@ const settings = require("./settings.config.js");
 const FILENAME = process.argv[2];
 const PRACTITIONER = process.argv[3];
 const NOGST = process.argv[4];
+const CHIRO = process.argv[5];
 
 (async () => {
 	try {
@@ -18,13 +19,20 @@ const NOGST = process.argv[4];
 
 		deleteNoShows(worksheet);
 		removeUnusedCol(worksheet);
-		const subTotal: number = calcSubTotal(worksheet);
-		const tax: number = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
-		insertComAndTax(worksheet, subTotal, tax);
 
-		calcTotal(worksheet, subTotal, tax);
+		if (CHIRO !== "--chiro") {
+			const subTotal: number = calcSubTotal(worksheet);
+			const tax: number = NOGST === "--no-tax" ? 0 : calcTax(worksheet);
+			insertComAndTax(worksheet, subTotal, tax);
 
-		addGSTNum(worksheet);
+			calcTotal(worksheet, subTotal, tax);
+
+			addGSTNum(worksheet);
+		} else {
+			separateICBC(worksheet);
+			separateOrthotics(worksheet);
+			calcChiroComm(worksheet);
+		}
 
 		await workbook.xlsx.writeFile(FILENAME);
 	} catch (e) {
@@ -79,7 +87,8 @@ function calcTax(worksheet: Worksheet) {
 function insertComAndTax(worksheet: Worksheet, subTotal: number, tax: number) {
 	worksheet.addRow([]);
 	worksheet.addRow(["Commission:", null, null, null, subTotal]);
-	worksheet.addRow(["GST Remittance:", null, null, null, tax]);
+	if (NOGST !== "--no-tax")
+		worksheet.addRow(["GST Remittance:", null, null, null, tax]);
 }
 
 function calcTotal(worksheet: Worksheet, subTotal: number, tax: number) {
@@ -140,4 +149,29 @@ function separateOrthotics(worksheet: Worksheet) {
 	worksheet.addRow(["Commission:", null, null, null, null]);
 	worksheet.addRow([]);
 	worksheet.addRows(orthoRows);
+	worksheet.addRow([]);
+	worksheet.addRow(["Commission:", null, null, null, null]);
+	worksheet.addRow([]);
+}
+
+function calcChiroComm(worksheet: Worksheet) {
+	const subTotalCol = worksheet.getColumn(5);
+	let subTotal = 0;
+	let commCount = 0;
+	let total = 0;
+	subTotalCol.eachCell(function (cell, rowNumber) {
+		if (rowNumber > 1 && cell.value) {
+			subTotal += +cell.value;
+		}
+		if (worksheet.getRow(rowNumber).getCell(1).value === "Commission:") {
+			const comSubTotal =
+				subTotal * settings[PRACTITIONER].commission[commCount];
+			commCount++;
+			cell.value = comSubTotal;
+			total += comSubTotal;
+			subTotal = 0;
+		}
+	});
+	worksheet.addRow([]);
+	worksheet.addRow(["Payment:", null, null, null, total]);
 }
